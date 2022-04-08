@@ -1,2 +1,2 @@
-pandas==1.4.1
+pandas
 streamlit==1.8.1
