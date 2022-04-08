@@ -25,6 +25,12 @@ def display_table(link, name):
 d = [
     ("Lula" , "https://chess-results.com/tnr599063.aspx?lan=1&art=9&fed=JCI&flag=30&snr=240"),
     ("Jahny" , "https://chess-results.com/tnr599063.aspx?lan=1&art=9&fed=ISL&flag=30&snr=226"),
+    ("Beth", "https://chess-results.com/tnr599063.aspx?lan=1&art=9&fed=ENG&flag=30&snr=241"),
+    ("Guy", "https://chess-results.com/tnr599063.aspx?lan=1&art=9&fed=ENG&flag=30&snr=244"),
+    ("Druid", "https://chess-results.com/tnr599063.aspx?lan=1&art=9&fed=USA&flag=30&snr=235"),
+    ("Toast", "https://chess-results.com/tnr599063.aspx?lan=1&art=9&fed=ENG&flag=30&snr=194"),
+    ("Rainz", "https://chess-results.com/tnr599063.aspx?lan=1&art=9&fed=NED&flag=30&snr=188"),
+    ("Anna", "https://chess-results.com/tnr599063.aspx?lan=1&art=9&fed=SWE&flag=30&snr=102")
 ]
 
 
