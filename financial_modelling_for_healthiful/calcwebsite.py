@@ -138,7 +138,7 @@ with col1:
         error = True
 with col2:
     for i in costs:
-        costs[i][6] = st.slider(f"{i.title()} cost per visit",0,costs[i][2],costs[i][1])
+        costs[i][6] = st.slider(f"{i.upper()} cost per visit",0,costs[i][2],costs[i][1])
     if not all_commision:
         commision = st.slider("Commission % per visit", 0.01 , 5.0, 1.0)/100
         for i in costs:
