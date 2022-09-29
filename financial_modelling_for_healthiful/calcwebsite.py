@@ -83,15 +83,15 @@ with st.expander("Edit risk profile consultation frequencies"):
     with c1:
         st.text("Low risk")
         for i in costs:
-            costs[i][3] = st.number_input(f"{i} visit freq", value = costs[i][3], key= 0)
+            costs[i][3] = st.number_input(f"{i.upper()} visit freq", value = costs[i][3], key= 0)
     with c2:
         st.text("Medium risk")
         for i in costs:
-            costs[i][4] = st.number_input(f"{i} visit freq", value = costs[i][4], key = 1)
+            costs[i][4] = st.number_input(f"{i.upper()} visit freq", value = costs[i][4], key = 1)
     with c3:
         st.text("High risk")
         for i in costs:
-            costs[i][5] = st.number_input(f"{i} visit freq", value = costs[i][5], key = 2)
+            costs[i][5] = st.number_input(f"{i.upper()} visit freq", value = costs[i][5], key = 2)
 
 all_commision = st.checkbox("Enable commision edit for each consultation type")
 if all_commision:
@@ -146,7 +146,7 @@ with col2:
 if all_commision:
     with col3:
         for i in costs:
-            costs[i][0] = st.slider(f"{i.title()} commission % per visit", 0.01, 5.0 , 1.0)/100
+            costs[i][0] = st.slider(f"{i.upper()} commission % per visit", 0.01, 5.0 , 1.0)/100
     
 
 if not error:
