@@ -1,13 +1,6 @@
 ## TODO
 """
-revenues for each type ( 6 sliders , min = 0 ) :  DONE
-commision slider ( 0 - 5% , float) , Across the board commision checkbox : DONE
-number of years of usage integer input : DONE
-ranges for low / med / high / inactivity risk : DONE
-base file size (slider from 0 to 500MB) : DONE
-edit profile frequency : DONE
-profitability feedback
-margin graph
+To-Do: 1)Add Average Margin extra graph ( Over the period ) 
 """
 
 
@@ -83,15 +76,15 @@ with st.expander("Edit risk profile consultation frequencies"):
     with c1:
         st.text("Low risk")
         for i in costs:
-            costs[i][3] = st.number_input(f"{i.upper()} visit freq", value = costs[i][3], key= 0)
+            costs[i][3] = st.number_input(f"{i.upper()} visit freq", value = float(costs[i][3]), key= 0, step = 1.0 , min_value = 0.0, format = "%.2f")
     with c2:
         st.text("Medium risk")
         for i in costs:
-            costs[i][4] = st.number_input(f"{i.upper()} visit freq", value = costs[i][4], key = 1)
+            costs[i][4] = st.number_input(f"{i.upper()} visit freq", value = float(costs[i][4]), key = 1 , step = 1.0, min_value = 0.0, format = "%.2f")
     with c3:
         st.text("High risk")
         for i in costs:
-            costs[i][5] = st.number_input(f"{i.upper()} visit freq", value = costs[i][5], key = 2)
+            costs[i][5] = st.number_input(f"{i.upper()} visit freq", value = float(costs[i][5]), key = 2, step = 1.0, min_value = 0.0 , format = "%.2f")
 
 all_commision = st.checkbox("Enable commision edit for each consultation type")
 if all_commision:
@@ -278,32 +271,43 @@ if not error:
         if (cum_tot_revenue[i]-cum_tot_revenue[i-1]) == 0:
             margin_for_year.append(0)
         else:
-            margin_for_year.append( (cum_tot_profits[i] - cum_tot_profits[i-1])/(cum_tot_revenue[i]-cum_tot_revenue[i-1]) )
+            margin_for_year.append( (cum_tot_profits[i] - cum_tot_profits[i-1])/(cum_tot_revenue[i]-cum_tot_revenue[i-1])*100 )
     
+    cum_margin = []
+    for i in range(years_of_usage+1):
+        if (cum_tot_revenue[i]) == 0:
+            cum_margin.append(0)
+        else:
+            cum_margin.append(cum_tot_profits[i]*100/cum_tot_revenue[i])
 
-
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.header("Revenue")
-        f = plot_line([i for i in range(len(cum_tot_revenue))], cum_tot_revenue, None, "Cumulative revenue", "Total revenue till year", None, None)
-        st.plotly_chart(f)
-    with col2:
-        st.header("Expenses")
-        f = plot_line([i for i in range(len(total_cost))], total_cost, None, "Cumulative expenses", "Total Costs till year", None, None)
-        st.plotly_chart(f)
-
-    col1_, col2_ = st.columns(2)
-    with col1_:
-        st.header("Profits")
-        f = plot_line([i for i in range(len(cum_tot_profits))], cum_tot_profits, None, "Cumulative profits", "Total Profit till year", None, None)
-        st.plotly_chart(f)
-    with col2_:
-        st.header("Margin for year")
-        f = plot_line([i for i in range(len(margin_for_year))], margin_for_year, None, "Margin for year ", "Margin ratio per year", None, None)
-        st.plotly_chart(f)
 
     if(cum_tot_profits[-1] > 0):
         st.success("PROFITABLE SCENARIO")
     else:
         st.error("LOSS MAKING SCENARIO")
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.header("Revenue")
+        f = plot_line([i for i in range(len(cum_tot_revenue))], cum_tot_revenue, None, "Cumulative revenue", "Total revenue till year", None, None)
+        st.plotly_chart(f, use_container_width=True)
+    with col2:
+        st.header("Expenses")
+        f = plot_line([i for i in range(len(total_cost))], total_cost, None, "Cumulative expenses", "Total Costs till year", None, None)
+        st.plotly_chart(f, use_container_width=True)
+    with col3:
+        st.header("Profits")
+        f = plot_line([i for i in range(len(cum_tot_profits))], cum_tot_profits, None, "Cumulative profits", "Total Profit till year", None, None)
+        st.plotly_chart(f, use_container_width=True)
+
+    col1_, col2_ = st.columns(2)
+    with col1_:
+        st.header("Margin over years of usage")
+        f = plot_line([i for i in range(len(cum_margin))], cum_margin, None, "Average Margin ", "Total Margin in % till year", None, None)
+        st.plotly_chart(f, use_container_width=True)
+    with col2_:
+        st.header("Margin for year")
+        f = plot_line([i for i in range(len(margin_for_year))], margin_for_year, None, "Margin for year ", "Margin in % per year", None, None)
+        st.plotly_chart(f, use_container_width=True)
+
+    
