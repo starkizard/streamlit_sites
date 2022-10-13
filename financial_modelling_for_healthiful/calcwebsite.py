@@ -321,7 +321,7 @@ if not error:
 
     st.title("Financial Forecasting")
     error = False
-    no_of_users = st.number_input("Number of users",value = 10000, min_value=0)
+    no_of_users = st.number_input("Number of users",value = 400000, min_value=0)
     cagr = st.slider("CAGR %", 0.0,20.0,10.0)
     cols = st.columns(5)
     years_str = ["1st", "3rd", "5th", "7th", "10th"]
