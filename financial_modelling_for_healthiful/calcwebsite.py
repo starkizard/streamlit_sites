@@ -13,7 +13,7 @@ repeating_docs = ["xray", "ip", "consultation", "mri", "bloodTest", "mammogram"]
 ## DEFAULT DATA
 
 
-#               0          1          2          3        4        5       6
+#               0          1          2          3        4        5       6      
 # value list = [commision, min_value, max_value, freq_l , freq_m , freq_h, value]
 
 costs = {}
@@ -322,6 +322,7 @@ if not error:
     st.title("Financial Forecasting")
     error = False
     no_of_users = st.number_input("Number of users",value = 10000, min_value=0)
+    cagr = st.slider("CAGR %", 0.0,20.0,10.0)
     cols = st.columns(5)
     years_str = ["1st", "3rd", "5th", "7th", "10th"]
     lowrisk_percent = [0]*5
@@ -346,7 +347,8 @@ if not error:
     cost_ddb = [0]
     cost_cmpt = [0]
     cost_rw = [0]
-    
+    cost_employee = [0]
+
     tot_revenue_till_now = file_opening_charges*no_of_users
     def getindex(i):
         if i < 1:
@@ -367,7 +369,7 @@ if not error:
         no_of_inactive = no_of_users*inactive_percent[getindex(i)]/100
         
         tot_revenue_till_now += lmh_revenue_py[0]*no_of_low_risk + lmh_revenue_py[1]*no_of_med_risk + lmh_revenue_py[2]*no_of_high_risk
-        total_revenue.append(tot_revenue_till_now)
+        total_revenue.append(tot_revenue_till_now*((1+cagr/100)**i))
 
         total_size_till_now += lmh_risk_size[0]*no_of_low_risk + lmh_risk_size[1]*no_of_med_risk + lmh_risk_size[2]*no_of_high_risk
         total_size.append(total_size_till_now)
@@ -382,16 +384,18 @@ if not error:
         cost_rw.append(s3_rw_cost_pm*12*(no_of_low_risk + no_of_high_risk + no_of_med_risk))
         cost_ddb.append(dynamodb_cost_pm*12*no_of_users)
         cost_cmpt.append(ec2_cost_pm*12*no_of_users)
+        cost_employee.append(85000000*((1+0.10)**i))
     
     cum_maintenance = np.cumsum(cost_maintenance)
     cum_storage = np.cumsum(cost_storage)
     cum_rw = np.cumsum(cost_rw)
     cum_ddb = np.cumsum(cost_ddb)
     cum_cmpt = np.cumsum(cost_cmpt)
+    cum_emply = np.cumsum(cost_employee)
 
     total_expenses = []
     for i in range(len(cum_maintenance)):
-        total_expenses.append(cum_maintenance[i]+cum_storage[i]+cum_rw[i]+cum_ddb[i]+cum_cmpt[i])
+        total_expenses.append(cum_maintenance[i]+cum_storage[i]+cum_rw[i]+cum_ddb[i]+cum_cmpt[i]+cum_emply[i])
     # st.write(total_revenue)
     # st.write(total_expenses)
 
@@ -419,7 +423,7 @@ if not error:
         f = plot_line([i for i in range(len(total_revenue))], total_revenue, None, "Cumulative revenue", "Total revenue till year", None, None)
         st.plotly_chart(f, use_container_width=True)
     with col2:
-        st.subheader("Expenses")
+        st.subheader("Expenses (Cloud costs + Employee costs)")
         f = plot_line([i for i in range(len(total_expenses))], total_expenses, None, "Cumulative expenses", "Total Costs till year", None, None)
         st.plotly_chart(f, use_container_width=True)
     with col3:
