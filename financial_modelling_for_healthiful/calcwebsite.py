@@ -1,9 +1,3 @@
-## TODO
-"""
-To-Do: 1)Add Average Margin extra graph ( Over the period ) 
-"""
-
-
 from pandas import lreshape
 import streamlit as st 
 import numpy as np
@@ -35,12 +29,12 @@ costs["mammogram"] =    [0.01, 2000, 8000, 0, 0.5, 0.5, -1]
 # value list  = [source, jpg]
 
 sizes = {}
-sizes["xray"] = 14.3
-sizes["ip"] = 1.1
-sizes["consultation"] = 0.2
-sizes["mri"] = 30
-sizes["bloodTest"] = 2
-sizes["mammogram"] = 19.4
+sizes["xray"] = 13.6
+sizes["ip"] = 1.5
+sizes["consultation"] = 0.234
+sizes["mri"] = 25
+sizes["bloodTest"] = 1.5
+sizes["mammogram"] = 18
 sizes["base_records"] = 30
 
 # # AWS DATA
@@ -69,7 +63,8 @@ def plot_line(x, y, y2, ytitle, title, ylinelabel, y2linelabel):
     return f
 
 error = False
-st.title("Financial Modelling")
+
+st.title("Unit economics")
 #risk_patient = st.selectbox("Select Patient Risk Profile",["Low risk", "Medium risk", "High risk"])
 with st.expander("Edit risk profile consultation frequencies"):
     c1, c2, c3 = st.columns(3)
@@ -106,6 +101,7 @@ with col1:
     h_ranges = high_risk_range.split(',')
     overlapping = False
     sizes["base_records"] = st.slider("Enter base records size in MB", 0,500,30)
+    file_opening_charges = st.slider("Enter file opening charges",0,500,200)
     def add_to_risk_of_year(ranges,risk):
         global overlapping
         for i in ranges:
@@ -259,7 +255,8 @@ if not error:
             cum_tot_revenue.append(cum_tot_revenue[-1])
         else:
             cum_tot_revenue.append(cum_tot_revenue[-1]+lmh_revenue_py[risk_of_year[i]])
-    
+    for i in range(1,len(cum_tot_revenue)):
+        cum_tot_revenue[i] += file_opening_charges
     #st.write((cum_tot_revenue))
 
     cum_tot_profits = []
@@ -267,7 +264,7 @@ if not error:
         cum_tot_profits.append(cum_tot_revenue[i]-total_cost[i])
 
     margin_for_year = [0]
-    for i in range(2,years_of_usage+1):
+    for i in range(1,years_of_usage+1):
         if (cum_tot_revenue[i]-cum_tot_revenue[i-1]) == 0:
             margin_for_year.append(0)
         else:
@@ -288,26 +285,166 @@ if not error:
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.header("Revenue")
+        st.subheader("Revenue")
         f = plot_line([i for i in range(len(cum_tot_revenue))], cum_tot_revenue, None, "Cumulative revenue", "Total revenue till year", None, None)
         st.plotly_chart(f, use_container_width=True)
     with col2:
-        st.header("Expenses")
+        st.subheader("Expenses")
         f = plot_line([i for i in range(len(total_cost))], total_cost, None, "Cumulative expenses", "Total Costs till year", None, None)
         st.plotly_chart(f, use_container_width=True)
     with col3:
-        st.header("Profits")
+        st.subheader("Profits")
         f = plot_line([i for i in range(len(cum_tot_profits))], cum_tot_profits, None, "Cumulative profits", "Total Profit till year", None, None)
         st.plotly_chart(f, use_container_width=True)
 
+    
+    new_title = f'<p style="font-family:sans-serif; color:Green; font-size: 42px;">{str(round(cum_margin[-1],2)) + "%"}</p>'
+    new_title_red = f'<p style="font-family:sans-serif; color:Red; font-size: 42px;">{str(round(cum_margin[-1],2)) + "%"}</p>'
+    st.subheader("Gross margin for entire usage")
+    if cum_margin[-1] > 0:
+        st.markdown(new_title, unsafe_allow_html=True)
+    else:
+        st.markdown(new_title_red, unsafe_allow_html=True)
+
+    #st.metric("",str(round(cum_margin[-1],2)) + "%")
+
     col1_, col2_ = st.columns(2)
     with col1_:
-        st.header("Margin over years of usage")
+        st.subheader("Gross margin for years of usage")
         f = plot_line([i for i in range(len(cum_margin))], cum_margin, None, "Average Margin ", "Total Margin in % till year", None, None)
         st.plotly_chart(f, use_container_width=True)
+        
     with col2_:
-        st.header("Margin for year")
+        st.subheader("Margin for year")
         f = plot_line([i for i in range(len(margin_for_year))], margin_for_year, None, "Margin for year ", "Margin in % per year", None, None)
         st.plotly_chart(f, use_container_width=True)
 
+    st.title("Financial Forecasting")
+    error = False
+    no_of_users = st.number_input("Number of users",value = 10000, min_value=0)
+    cols = st.columns(5)
+    years_str = ["1st", "3rd", "5th", "7th", "10th"]
+    lowrisk_percent = [0]*5
+    mediumrisk_percent = [0]*5
+    highrisk_percent = [0]*5
+    inactive_percent  = [0]*5
+    for i in range(5):
+        with cols[i]:
+            st.subheader(f"till {years_str[i]} year")
+            lowrisk_percent[i] = st.number_input("Low risk %", value = 0, min_value=0, max_value = 100, key = f"l{i}")
+            mediumrisk_percent[i] = st.number_input("Medium risk %", value =0, min_value=0, max_value = 100 - lowrisk_percent[i], key = f"m{i}")
+            highrisk_percent[i] = st.number_input("High risk %", value = 0, min_value=0, max_value = 100 - mediumrisk_percent[i] - lowrisk_percent[i], key = f"h{i}") 
+            inactive_percent[i] = 100 - lowrisk_percent[i] - mediumrisk_percent[i] - highrisk_percent[i]
+            st.metric("Inactive %", str(inactive_percent[i]) + " %")
     
+    total_revenue = [0]
+    total_size = [0]
+    total_objects = [0]
+    total_size_till_now = sizes["base_records"]*no_of_users
+    cost_maintenance = [0]
+    cost_storage = [0]
+    cost_ddb = [0]
+    cost_cmpt = [0]
+    cost_rw = [0]
+    
+    tot_revenue_till_now = file_opening_charges*no_of_users
+    def getindex(i):
+        if i < 1:
+            return 0
+        if i < 3:
+            return 1
+        if i < 5:
+            return 2
+        if i < 7:
+            return 3
+        if i < 10:
+            return 4
+
+    for i in range(10):
+        no_of_low_risk = no_of_users*lowrisk_percent[getindex(i)]/100
+        no_of_med_risk = no_of_users*mediumrisk_percent[getindex(i)]/100
+        no_of_high_risk = no_of_users*highrisk_percent[getindex(i)]/100
+        no_of_inactive = no_of_users*inactive_percent[getindex(i)]/100
+        
+        tot_revenue_till_now += lmh_revenue_py[0]*no_of_low_risk + lmh_revenue_py[1]*no_of_med_risk + lmh_revenue_py[2]*no_of_high_risk
+        total_revenue.append(tot_revenue_till_now)
+
+        total_size_till_now += lmh_risk_size[0]*no_of_low_risk + lmh_risk_size[1]*no_of_med_risk + lmh_risk_size[2]*no_of_high_risk
+        total_size.append(total_size_till_now)
+
+        total_objects.append(total_size_till_now/16)
+        cost_maintenance.append(total_size_till_now*object_maintenance_cost_pm*12/16)
+
+        inactive_size = total_size_till_now*inactive_percent[getindex(i)]/100
+        active_size = total_size_till_now - inactive_size
+        cost_storage.append(inactive_size*gb_glacier_cost_pm*12/1024  +  active_size*gb_storage_cost_pm*12/1024)
+        
+        cost_rw.append(s3_rw_cost_pm*12*(no_of_low_risk + no_of_high_risk + no_of_med_risk))
+        cost_ddb.append(dynamodb_cost_pm*12*no_of_users)
+        cost_cmpt.append(ec2_cost_pm*12*no_of_users)
+    
+    cum_maintenance = np.cumsum(cost_maintenance)
+    cum_storage = np.cumsum(cost_storage)
+    cum_rw = np.cumsum(cost_rw)
+    cum_ddb = np.cumsum(cost_ddb)
+    cum_cmpt = np.cumsum(cost_cmpt)
+
+    total_expenses = []
+    for i in range(len(cum_maintenance)):
+        total_expenses.append(cum_maintenance[i]+cum_storage[i]+cum_rw[i]+cum_ddb[i]+cum_cmpt[i])
+    # st.write(total_revenue)
+    # st.write(total_expenses)
+
+    total_profits = np.subtract(total_revenue,total_expenses)
+
+    margin_for_year = [0]
+    for i in range(1,10+1):
+        if (total_revenue[i]-total_revenue[i-1]) == 0:
+            margin_for_year.append(0)
+        else:
+            margin_for_year.append( (total_profits[i] - total_profits[i-1])/(total_revenue[i]-total_revenue[i-1])*100 )
+    
+    cum_margin = [0]
+    for i in range(1,10+1):
+        if (total_revenue[i]) == 0:
+            cum_margin.append(0)
+        else:
+            cum_margin.append(total_profits[i]*100/total_revenue[i])
+
+
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.subheader("Revenue")
+        f = plot_line([i for i in range(len(total_revenue))], total_revenue, None, "Cumulative revenue", "Total revenue till year", None, None)
+        st.plotly_chart(f, use_container_width=True)
+    with col2:
+        st.subheader("Expenses")
+        f = plot_line([i for i in range(len(total_expenses))], total_expenses, None, "Cumulative expenses", "Total Costs till year", None, None)
+        st.plotly_chart(f, use_container_width=True)
+    with col3:
+        st.subheader("Profits")
+        f = plot_line([i for i in range(len(total_profits))], total_profits, None, "Cumulative profits", "Total Profit till year", None, None)
+        st.plotly_chart(f, use_container_width=True)
+
+    
+    new_title = f'<p style="font-family:sans-serif; color:Green; font-size: 42px;">{str(round(cum_margin[-1],2)) + "%"}</p>'
+    new_title_red = f'<p style="font-family:sans-serif; color:Red; font-size: 42px;">{str(round(cum_margin[-1],2)) + "%"}</p>'
+    st.subheader("Gross margin for entire usage")
+    if cum_margin[-1] > 0:
+        st.markdown(new_title, unsafe_allow_html=True)
+    else:
+        st.markdown(new_title_red, unsafe_allow_html=True)
+
+    #st.metric("",str(round(cum_margin[-1],2)) + "%")
+
+    col1_, col2_ = st.columns(2)
+    with col1_:
+        st.subheader("Gross margin for years of usage")
+        f = plot_line([i for i in range(len(cum_margin))], cum_margin, None, "Average Margin ", "Total Margin in % till year", None, None)
+        st.plotly_chart(f, use_container_width=True)
+        
+    with col2_:
+        st.subheader("Margin for year")
+        f = plot_line([i for i in range(len(margin_for_year))], margin_for_year, None, "Margin for year ", "Margin in % per year", None, None)
+        st.plotly_chart(f, use_container_width=True)
